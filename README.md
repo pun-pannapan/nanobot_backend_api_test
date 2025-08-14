@@ -35,7 +35,7 @@ service ไว้ในที่เดียวได้ทำให้ maintain
 
 erDiagram
     USERS {
-        integer  id PK
+        integer id PK
         varchar(50) username
         varchar(1000) full_name
         varchar(400) email
@@ -45,7 +45,7 @@ erDiagram
     }
 
     EXCHANGE_INFO {
-        integer  id PK
+        integer id PK
         varchar(10) symbol
         text exchange_info
         timestamptz called_at
