@@ -1,6 +1,5 @@
 เป็น micro service ที่เป็น 2 service หรือ api
-1. User API — ผู้ใช้งานระบบ (Users CRUD), JWT Authentication, WebSocket แจ้งเตือน สำหรับส่วน delete อาจทำเป็น softdelete ก็ได้แต่กรณียังทำเป็น hard delete
-
+1. User API — ผู้ใช้งานระบบ (Users CRUD), JWT Authentication, WebSocket แจ้งเตือน
 2. Price API — ดึงราคาสินทรัพย์จาก Binance ที่มีแคช Redis
 
 question - answer.
@@ -14,9 +13,7 @@ A. เลือกใช้ FastAPI (Python) สามารถพัฒนา�
 งานที่ต้องทำ:
 สร้าง endpoint ที่ให้ Frontend สามารถเรียกใช้เพื่อดึงข้อมูลผู้ใช้งานพร้อมกับราคาสกุลเงินดิจิทัลล่าสุดที่ดึงจาก Binance
 A. http://localhost:8001/internal/price?limit=5
-สำหรับ internal Api การใช้ internal key แทนการใช้ token
-จะประโยชน์คือลด network transaction และไม่จำเป็นต้องสร้าง
-ีuser สำหรับ internal service integration
+
 
 7. การออกแบบฐานข้อมูลและ Microservices
 งานที่ต้องทำ:
@@ -38,20 +35,20 @@ service ไว้ในที่เดียวได้ทำให้ maintain
 
 erDiagram
     USERS {
-        INT id PK
-        VARCHAR username "UNIQUE INDEX"
-        VARCHAR full_name
-        VARCHAR email
-        TEXT hashed_password
-        TIMESTAMPTZ created_at
-        TIMESTAMPTZ updated_at
+        integer  id PK
+        varchar(50) username
+        varchar(1000) full_name
+        varchar(400) email
+        text hashed_password
+        timestamptz created_at
+        timestamptz updated_at
     }
 
     EXCHANGE_INFO {
-        INT id PK
-        VARCHAR symbol "INDEX"
-        JSONB exchange_info
-        TIMESTAMPTZ called_at
+        integer  id PK
+        varchar(10) symbol
+        text exchange_info
+        timestamptz called_at
     }
 
 
@@ -62,34 +59,34 @@ https://mermaid.live
 
 erDiagram
     USERS {
-        INT id PK
-        VARCHAR username "UNIQUE INDEX"
-        VARCHAR full_name
-        VARCHAR email
-        TEXT hashed_password
-        TIMESTAMPTZ created_at
-        TIMESTAMPTZ updated_at
+        integer id PK
+        varchar(50) username
+        varchar(1000) full_name
+        varchar(400) email
+        text hashed_password
+        timestamptz created_at
+        timestamptz updated_at
     }
 
     EXCHANGE_INFO {
-        INT id PK
-        VARCHAR symbol "INDEX"
-        JSONB exchange_info
-        TIMESTAMPTZ called_at
+        integer id PK
+        varchar(10) symbol
+        text exchange_info
+        timestamptz called_at
     }
 
     ASSETS {
-        smallint id PK
-        varchar code "e.g. BTC"
-        varchar name
-        int8 base_precision "จำนวนทศนิยมของสินทรัพย์"
+        integer id PK
+        varchar(10) code
+        varchar(1000) name
+        integer base_precision "Asset precision"
     }
 
     SYMBOLS {
-        int id PK
-        varchar symbol "e.g. BTCUSDT"
-        int base_asset_id FK
-        int quote_asset_id FK
+        integer id PK
+        varchar(10) symbol "BTCUSDT"
+        integer base_asset_id FK
+        integer quote_asset_id FK
         numeric tick_size
         numeric step_size
         numeric min_notional
@@ -97,24 +94,24 @@ erDiagram
     }
 
     ORDERS {
-        bigserial id PK
+        uuid id PK
         int user_id FK
         int symbol_id FK
+        int exchange_info_id FK "Reference to market data"
         varchar side "buy/sell"
         varchar order_type "market/limit/stop_limit"
-        varchar time_in_force "GTC/IOC/FOK"
         numeric price
         numeric stop_price
         numeric qty
         numeric executed_qty
-        varchar status "pending/open/partially_filled/filled/canceled/rejected"
-        varchar client_order_id "unique per user (optional)"
-        timestamptz created_at "default now()"
+        varchar status
+        varchar client_order_id
+        timestamptz created_at
         timestamptz updated_at
     }
 
     TRADES {
-        bigserial id PK
+        uuid id PK
         bigint order_id FK
         int symbol_id FK
         numeric price
@@ -125,16 +122,14 @@ erDiagram
         timestamptz trade_time "default now()"
     }
 
-    USERS ||--o{ WALLETS : "1..*"
-
     USERS ||--o{ ORDERS : "1..*"
     SYMBOLS ||--o{ ORDERS : "1..*"
-    ORDERS ||--o{ TRADES : "1..*"
+    ORDERS ||--o{ TRADES : "1..1"
     SYMBOLS ||--o{ TRADES : "1..*"
     ASSETS ||--o{ TRADES : "fee asset"
-
     ASSETS ||--o{ SYMBOLS : "base"
     ASSETS ||--o{ SYMBOLS : "quote"
+    EXCHANGE_INFO ||--o{ ORDERS : "1..*"
 
 -----------------------------------------------------------------------------
 example for .env value
@@ -165,30 +160,15 @@ CACHE_TTL_SECONDS=55
 -----------------------------------------------------------------------------
 Run docker ใน local ใช้คำสั่ง
 docker compose up -d --build
-และมี deploy บน Digital Ocean
-แต่ไม่ได้ทำ Domain Name หรือ SSL (อาจจะยังไม่จำเป็นสำหรับการทำสำหรับระบบ Test นี้)
 
 1. User API 
-Swagger UI On Local : http://localhost:8000/docs
-Swagger UI On DevEnv:http://174.138.17.16:8000/docs
-u:admin
-p:admin1234
+Swagger UI: http://localhost:8000/docs
 
-Web Socket Local  Endpoint : ws://localhost:8000/ws
-Web Socket Devenv Endpoint : ws://174.138.17.16:8000/ws
 
 2. Price API
-Swagger UI On Local : http://localhost:8100/docs
-Swagger UI On DevEnv:http://174.138.17.16:8001/docs
+Swagger UI: http://localhost:8100/docs
 
 3. Postgres Database
-PG Admin On Local: http://localhost:5050/
-้host:postgres
-db:appdb
-u:postgres
-p:postgres1234
+PG Admin: http://localhost:5050/
 
-4. Run unit test
-docker exec -it nanobot_backend_api_test-user_api-1 pytest -q
-docker exec -it nanobot_backend_api_test-price_api-1 pytest -q
 -----------------------------------------------------------------------------
