@@ -54,7 +54,9 @@ erDiagram
 
 ฐานข้อมูลเพิ่มเติมสำหรับระบบการเทรดเพิ่มเติม
 โดยที่ wallet - wallet trans เราเก็บไว้ที่ exchange เป็นหลักแต่เราก็ต้องเก็บ
-log ไว้ที่เราด้วย นำโคดไปเปิดได้ใน mermaid live เพื่อแสดง er diagram
+log ไว้ที่เราด้วย นำโคดไปเปิดได้ใน mermaid live เพื่อแสดง er diagram 
+(copy ตั้งแต่ erDiagram จนถึง EXCHANGE_INFO ||--o{ ORDERS : "1..*" )
+
 https://mermaid.live
 
 erDiagram
@@ -163,7 +165,6 @@ docker compose up -d --build
 
 1. User API 
 Swagger UI: http://localhost:8000/docs
-
 
 2. Price API
 Swagger UI: http://localhost:8100/docs
